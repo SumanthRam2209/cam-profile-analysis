@@ -1,0 +1,51 @@
+% MATLAB code to generate a cam profile
+
+% Cam parameters
+N = 360; % Number of points (resolution of the cam profile)
+base_circle_radius = 20; % Base circle radius in mm
+follower_stroke = 10; % Maximum follower displacement (lift) in mm
+theta_1 = 60; % Rise angle in degrees
+theta_2 = 180; % Fall angle in degrees
+theta_dwell = 360 - (theta_1 + theta_2); % Dwell angle in degrees
+
+% Angular positions for the cam rotation
+theta = linspace(0, 360, N);
+
+% Follower displacement (s) based on simple harmonic motion
+s = zeros(1, N);
+for i = 1:N
+    if theta(i) <= theta_1
+        % Rise (0 to theta_1)
+        s(i) = (follower_stroke / 2) * (1 - cosd((180 / theta_1) * theta(i)));
+    elseif theta(i) <= (theta_1 + theta_dwell)
+        % Dwell (theta_1 to theta_1 + theta_dwell)
+        s(i) = follower_stroke;
+    elseif theta(i) <= (theta_1 + theta_dwell + theta_2)
+        % Fall (theta_1 + theta_dwell to 360)
+        s(i) = (follower_stroke / 2) * (1 + cosd((180 / theta_2) * (theta(i) - theta_1 - theta_dwell)));
+    else
+        % Dwell (remaining part of the cycle)
+        s(i) = 0;
+    end
+end
+
+% Cam profile (cam radius as a function of angle)
+cam_radius = base_circle_radius + s;
+
+% Polar plot of the cam profile
+figure;
+polarplot(deg2rad(theta), cam_radius, 'b', 'LineWidth', 2);
+title('Cam Profile');
+ax = gca;
+ax.ThetaTick = 0:45:360;
+ax.RLim = [0 max(cam_radius) + 10];
+grid on;
+
+% Cartesian plot of the cam profile
+figure;
+plot(theta, cam_radius, 'r', 'LineWidth', 2);
+xlabel('Cam Angle (degrees)');
+ylabel('Cam Radius (mm)');
+title('Cam Profile (Cartesian)');
+grid on;
+
